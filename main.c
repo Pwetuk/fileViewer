@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "paths/paths.h"
 #include "FSaccess/FSaccess.h"
+#include "FSaccess/consts.h"
 
 int
 main(int argc, char** argv)
@@ -18,7 +19,7 @@ main(int argc, char** argv)
     }
     
     current_path* path = init_path(a);
-    print_files_in_dir(path);
+    print_files_in_dir(path, FILTER_NON_UTILITY);
     free(a);
     delete_path(path);
     path_clean();

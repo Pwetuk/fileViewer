@@ -1,17 +1,19 @@
 #include "FSaccess.h"
+#include "filters.h"
+#include "consts.h"
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 struct dirent**
-get_files_in_dir(struct current_path* path, int* number_of_entries)
+get_files_in_dir(struct current_path* path, int* number_of_entries, typeof(int (const struct dirent *)) *filter)
 {
     struct dirent** files_in_dir;
 
     *number_of_entries = scandir(
         path->current,
         &files_in_dir,
-        NULL,
+        filter,
         alphasort
     );
 
@@ -25,10 +27,11 @@ get_files_in_dir(struct current_path* path, int* number_of_entries)
 
 
 void
-print_files_in_dir(struct current_path* path)
+print_files_in_dir(struct current_path* path, int filter_type)
 {   
     int number_of_entries;
-    struct dirent** files_in_dir = get_files_in_dir(path, &number_of_entries);
+    typeof(int (const struct dirent*))* filter_func = resolve_filter_type(filter_type);
+    struct dirent** files_in_dir = get_files_in_dir(path, &number_of_entries, filter_func);
     for(int i = 0; i < number_of_entries; ++i){
         printf("%s\n", files_in_dir[i]->d_name);
     }
@@ -41,4 +44,17 @@ free_all_files(struct dirent** dir_entries, int length){
         free(dir_entries[i]);
     }
     free(dir_entries);
+}
+
+typeof(int (const struct dirent *))*
+resolve_filter_type(int filter_type)
+{
+    switch (filter_type)
+    {
+    case FILTER_VISIBLE:
+        return filter_visible;
+    case FILTER_NON_UTILITY:
+        return filter_local;
+    }
+    return filter_all;
 }
