@@ -1,5 +1,0 @@
-#define FILTER_ALL 0
-
-#define FILTER_VISIBLE 1
-
-#define FILTER_NON_UTILITY 2

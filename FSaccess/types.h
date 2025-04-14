@@ -1,0 +1,6 @@
+#ifndef FSACCESS_TYPES_H
+#define FSACCESS_TYPES_H
+
+enum filter_type{FILTER_ALL, FILTER_VISIBLE, FILTER_NON_UTILITY};
+
+#endif

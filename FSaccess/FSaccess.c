@@ -1,9 +1,10 @@
 #include "FSaccess.h"
 #include "filters.h"
-#include "consts.h"
+#include "types.h"
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "types.h"
 
 struct dirent**
 get_files_in_dir(struct current_path* path, int* number_of_entries, typeof(int (const struct dirent *)) *filter)
@@ -27,10 +28,10 @@ get_files_in_dir(struct current_path* path, int* number_of_entries, typeof(int (
 
 
 void
-print_files_in_dir(struct current_path* path, int filter_type)
+print_files_in_dir(struct current_path* path, enum filter_type filter_option)
 {   
     int number_of_entries;
-    typeof(int (const struct dirent*))* filter_func = resolve_filter_type(filter_type);
+    typeof(int (const struct dirent*))* filter_func = resolve_filter_type(filter_option);
     struct dirent** files_in_dir = get_files_in_dir(path, &number_of_entries, filter_func);
     for(int i = 0; i < number_of_entries; ++i){
         printf("%s\n", files_in_dir[i]->d_name);
@@ -47,9 +48,9 @@ free_all_files(struct dirent** dir_entries, int length){
 }
 
 typeof(int (const struct dirent *))*
-resolve_filter_type(int filter_type)
+resolve_filter_type(enum filter_type filter_option)
 {
-    switch (filter_type)
+    switch (filter_option)
     {
     case FILTER_VISIBLE:
         return filter_visible;
