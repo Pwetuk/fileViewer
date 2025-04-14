@@ -3,10 +3,11 @@
 #include <stdlib.h>
 
 struct settings*
-settings_init(char* config_path)
+settings_init()
 {
     struct settings* file_viewer_settings = malloc(sizeof(struct settings));
     file_viewer_settings->current_filter_type = FILTER_VISIBLE;
+    return file_viewer_settings;
 }
 
 

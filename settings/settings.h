@@ -9,7 +9,7 @@
 #endif
 
 struct settings* 
-settings_init(char* config_path);
+settings_init();
 
 
 void

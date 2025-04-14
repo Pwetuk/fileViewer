@@ -7,7 +7,7 @@ OBJS = $(OBj_DIR)/paths_methods.o $(OBj_DIR)/FSaccess.o $(OBj_DIR)/main.o $(OBj_
 create_dir:
 	@mkdir -p $(OBj_DIR)
 
-all: create_dir main
+all: create_dir main.out
 
 $(OBj_DIR)/paths_methods.o: paths/paths_methods.c paths/paths.h
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -24,11 +24,11 @@ $(OBj_DIR)/settings.o: settings/settings.c settings/settings.h FSaccess/types.h
 $(OBj_DIR)/main.o: main.c paths/paths.h FSaccess/FSaccess.h FSaccess/types.h 
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-main: $(OBJS)
+main.out: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -f $(OBj_DIR)/*.o
+	rm -f $(OBj_DIR)/*.o main.out
 
 make_clean: all clean
 

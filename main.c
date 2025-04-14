@@ -12,8 +12,7 @@ int
 main(int argc, char** argv)
 {      
     path_init();
-    struct settings* file_viewer_settings = settings_init(NULL);
-
+    struct settings* file_viewer_settings = settings_init();
 
     char* a = malloc(sizeof(char)*100);
     if(argc > 1){

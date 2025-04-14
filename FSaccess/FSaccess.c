@@ -56,6 +56,8 @@ resolve_filter_type(enum filter_type filter_option)
         return filter_visible;
     case FILTER_NON_UTILITY:
         return filter_local;
+    case FILTER_ALL:
+        return filter_all;
     }
     return filter_all;
 }
