@@ -25,10 +25,16 @@ main(int argc, char** argv)
     print_files_in_dir(path, file_viewer_settings->current_filter_type);   
     change_filter_mode(file_viewer_settings, FILTER_NON_UTILITY);
     printf("\n");
+    mkdir_by_path(path, "new_dir");
+    enum cd_error result = cd_dir(&path, "new_dir");
+    if(result == NO_DIRECTORY){
+        printf("No directory\n");
+    }
+
     print_files_in_dir(path, file_viewer_settings->current_filter_type);
 
     free(a);
-    delete_path(path);
+    cascade_delete(path);
     path_clean();
     settings_clear(file_viewer_settings);
     return 0;

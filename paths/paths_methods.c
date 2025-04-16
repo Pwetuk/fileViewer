@@ -138,3 +138,15 @@ void
 path_clean(){
     free(DEFAULT_PATH);
 }
+
+void
+delete_end_slash(struct current_path* path)
+{
+    path->current[path->length - 1] = '\0';
+}
+
+void
+add_end_slash(struct current_path* path)
+{
+    path->current[path->length - 1] = '/';
+}

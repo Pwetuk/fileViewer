@@ -51,4 +51,10 @@ path_init();
 void
 path_clean();
 
+void
+delete_end_slash(struct current_path* path);
+
+void
+add_end_slash(struct current_path* path);
+
 #endif
