@@ -9,19 +9,19 @@ create_dir:
 
 all: create_dir main.out
 
-$(OBj_DIR)/paths_methods.o: paths/paths_methods.c paths/paths.h
+$(OBj_DIR)/paths_methods.o: FSaccess/paths/paths_methods.c FSaccess/paths/paths.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBj_DIR)/filters.o: FSaccess/filters.c FSaccess/filters.h FSaccess/types.h
+$(OBj_DIR)/filters.o: FSaccess/paths/filters/filters.c FSaccess/paths/filters/filters.h 
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBj_DIR)/FSaccess.o: FSaccess/FSaccess.c $(OBj_DIR)/filters.o FSaccess/FSaccess.h FSaccess/filters.h FSaccess/types.h
+$(OBj_DIR)/FSaccess.o: FSaccess/FSaccess.c $(OBj_DIR)/filters.o FSaccess/FSaccess.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBj_DIR)/settings.o: settings/settings.c settings/settings.h FSaccess/types.h
+$(OBj_DIR)/settings.o: FSaccess/settings/settings.c FSaccess/settings/settings.h FSaccess/settings/settings_types.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBj_DIR)/main.o: main.c paths/paths.h FSaccess/FSaccess.h FSaccess/types.h 
+$(OBj_DIR)/main.o: main.c FSaccess/paths/paths.h FSaccess/FSaccess.h FSaccess/fs_types.h 
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 main.out: $(OBJS)

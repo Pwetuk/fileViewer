@@ -1,7 +1,11 @@
-#ifndef FSACCESS_TYPES_H
-#define FSACCESS_TYPES_H
+#ifndef PATHS_TYPES_H
+#define PATHS_TYPES_H
 
-enum filter_type{FILTER_ALL, FILTER_VISIBLE, FILTER_NON_UTILITY};
+enum filter_type{
+    FILTER_ALL          = 0,
+    FILTER_VISIBLE      = 1,
+    FILTER_NON_UTILITY  = 2
+};
 enum file_type{
     D_UNKNOWN             = 0,
     D_PIPE                = 1,
@@ -13,4 +17,5 @@ enum file_type{
     D_SOCKET              = 12
 };
 enum cd_error{NO_DIRECTORY, NO_ERROR};
+
 #endif

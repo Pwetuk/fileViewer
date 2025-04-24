@@ -1,7 +1,6 @@
-#include "../FSaccess/types.h"
 #include "settings.h"
+#include "../paths/pth_types.h"
 #include <stdlib.h>
-
 struct settings*
 settings_init()
 {
