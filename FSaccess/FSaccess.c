@@ -53,3 +53,38 @@ fs_change_filter_type(struct FSaccess* main_access,
 {
     change_filter_mode(main_access->fs_settings, filter_mode);
 }
+
+enum cd_error
+fs_change_directory(struct FSaccess* main_access,
+    const char* cd_to_dir)
+{
+    return pth_cd_dir(&(main_access->access_path), cd_to_dir);
+}
+
+int
+fs_make_directory(struct FSaccess* main_access,
+    const char* new_dir_name)
+{
+    return pth_mkdir_by_path(main_access->access_path, new_dir_name);
+}
+
+enum creation_error
+fs_create_file(struct FSaccess* main_access, 
+    const char* new_file_name)
+{
+    return pth_create_file(main_access->access_path, new_file_name);
+}
+
+enum remove_error
+fs_remove_file(struct FSaccess* main_access, 
+    const char* to_remove_file)
+{
+    return pth_remove_file(main_access->access_path, to_remove_file);
+}
+
+enum remove_error
+fs_remove_directory(struct FSaccess* main_access, 
+    const char* to_remove_dir)
+{
+    return pth_remove_directory(main_access->access_path, to_remove_dir);
+}

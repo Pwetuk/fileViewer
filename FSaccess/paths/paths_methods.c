@@ -166,7 +166,7 @@ struct dirent*
 pth_get_file_in_dir(
     struct current_path* path,
     typeof(int (const struct dirent *)) *filter, 
-    enum file_type type_of_file, 
+    int type_of_file, 
     const char* needed)
 {
     int length;
@@ -269,9 +269,9 @@ pth_mkdir_by_path(struct current_path* path, const char* dir_name)
 enum cd_error
 pth_cd_dir(struct current_path** path, const char* dir_name)
 {
-    struct dirent* is_exists = pth_get_file_in_dir(*path, FILTER_ALL, D_DIRECTORY, dir_name);
+    struct dirent* is_exists = pth_get_file_in_dir(*path, FILTER_ALL, DT_DIR, dir_name);
     if(is_exists == NULL){
-        return NO_DIRECTORY;
+        return CD_INVALID_DIRECTORY;
     }
     
     if(strcmp(is_exists->d_name, "..") == 0){
@@ -282,5 +282,108 @@ pth_cd_dir(struct current_path** path, const char* dir_name)
     
     free(is_exists);
 
-    return NO_ERROR;
+    return CD_NO_ERROR;
+}
+
+enum creation_error 
+pth_create_file(struct current_path* path, 
+    const char* new_file)
+{
+    int dir_d = open(path->current, O_DIRECTORY);
+    if(dir_d == -1){
+        return CR_SOMETHING_WENT_WRONG;
+    }
+    int file_d = openat(dir_d, new_file, O_WRONLY | O_CREAT, 0744);
+    if(file_d == -1){
+        return CR_SOMETHING_WENT_WRONG;
+    }
+    int close_file_d = close(file_d);
+    if(close_file_d == -1){
+        return CR_SOMETHING_WENT_WRONG;
+    }
+    int close_dir_d = close(dir_d);
+    if(close_dir_d == -1){
+        return CR_SOMETHING_WENT_WRONG;
+    }
+    return CR_NO_ERROR;
+}
+
+enum remove_error
+pth_remove_file(struct current_path* path, 
+    const char* remove_file)
+{   
+    int dir_d = open(path->current, O_DIRECTORY);
+
+    if(dir_d == -1){
+        return RM_SOMETHING_WENT_WRONG;
+    }
+
+    int error = unlinkat(dir_d, remove_file, 0);
+    if(error == -1){
+        return RM_SOMETHING_WENT_WRONG;
+    }
+    int close_dir_d = close(dir_d);
+    if(close_dir_d == -1){
+        return RM_SOMETHING_WENT_WRONG;
+    }
+    return RM_NO_ERROR;
+}
+
+enum remove_error
+pth_remove_directory(struct current_path* path, 
+    const char* remove_dir)
+{   
+    struct current_path* dir_path = pth_add_path(path, remove_dir);
+    enum remove_error remove_files_error = pth_remove_all_files_from_dir(dir_path);
+
+    if(remove_files_error != RM_NO_ERROR){
+        pth_delete_path(dir_path);
+        return remove_files_error;
+    }
+
+    int dir_d = open(path->current, O_DIRECTORY);
+    if(dir_d == -1){
+        pth_delete_path(dir_path);
+        return RM_NO_RIGHTS;
+    }
+
+    int unlink_err = unlinkat(dir_d, remove_dir, AT_REMOVEDIR);
+
+    if(unlink_err == -1){
+        pth_delete_path(dir_path);
+        return RM_NOT_A_DIRECTORY;
+    }
+
+    int close_dir_err = close(dir_d);
+    if(close_dir_err == -1){
+        pth_delete_path(dir_path);
+        return RM_NOT_A_FILE;
+    }
+    pth_delete_path(dir_path);
+    return RM_NO_ERROR;
+}
+
+enum remove_error
+pth_remove_all_files_from_dir(struct current_path* dir_path)
+{
+    //printf("Starting to remove files from dir: %s\n", dir_path->current);
+    int length;
+    struct dirent** all_files = pth_get_files_in_dir(dir_path, &length, pth_resolve_filter_type(FILTER_NON_UTILITY));
+
+    if(all_files == NULL){
+        pth_free_all_files(all_files, length);
+        return RM_NO_RIGHTS;
+    }
+
+
+    for(int i = 0; i < length; ++i){
+        //printf("Deleting file: %s with number %d\n", all_files[i]->d_name, i);
+        enum remove_error error = pth_remove_file(dir_path, all_files[i]->d_name);
+        if(error != RM_NO_ERROR){
+            pth_free_all_files(all_files, length);
+            return error;
+        }
+    }
+    pth_free_all_files(all_files, length);
+    return RM_NO_ERROR;
 }

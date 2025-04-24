@@ -6,16 +6,24 @@ enum filter_type{
     FILTER_VISIBLE      = 1,
     FILTER_NON_UTILITY  = 2
 };
-enum file_type{
-    D_UNKNOWN             = 0,
-    D_PIPE                = 1,
-    D_CHARACTER_DEVICE    = 2,
-    D_DIRECTORY           = 4,
-    D_BLOCK_DEVICE        = 6,
-    D_FILE                = 8,
-    D_LINK                = 10,
-    D_SOCKET              = 12
-};
-enum cd_error{NO_DIRECTORY, NO_ERROR};
 
+enum cd_error{
+    CD_INVALID_DIRECTORY, 
+    CD_NO_DIRECTORY, 
+    CD_NO_ERROR
+};
+
+enum creation_error {
+    CR_NO_ERROR, 
+    CR_NO_RIGHTS, 
+    CR_SOMETHING_WENT_WRONG
+};
+
+enum remove_error {
+    RM_NO_ERROR, 
+    RM_NO_RIGHTS, 
+    RM_NOT_A_DIRECTORY, 
+    RM_NOT_A_FILE, 
+    RM_SOMETHING_WENT_WRONG
+};
 #endif

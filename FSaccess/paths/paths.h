@@ -78,4 +78,16 @@ pth_cd_dir(struct current_path** path, const char* dir_name);
 void
 pth_free_all_files_except(struct dirent** dir_entries, int length, int except_dirent);
 
+enum creation_error 
+pth_create_file(struct current_path* path, const char* new_file);
+
+enum remove_error
+pth_remove_file(struct current_path* path, const char* remove_file);
+
+enum remove_error
+pth_remove_directory(struct current_path* path, const char* remove_dir);
+
+enum remove_error
+pth_remove_all_files_from_dir(struct current_path* dir_path);
+
 #endif
