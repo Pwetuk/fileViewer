@@ -20,8 +20,9 @@ main(int argc, char** argv)
     fs_change_filter_type(main_access, FILTER_NON_UTILITY);
 
     printf("\n");
-    /*
+    
     fs_make_directory(main_access, "new_dir1");
+    fs_make_directory(main_access, "new_dir");
     fs_change_directory(main_access, "new_dir");
 
     fs_print_files_in_current_dir(main_access);
@@ -31,6 +32,8 @@ main(int argc, char** argv)
     fs_create_file(main_access, "test2.txt");
 
     fs_remove_file(main_access, "test.txt");
+
+    fs_print_files_in_current_dir(main_access);
 
     fs_change_directory(main_access, "..");
 
@@ -44,7 +47,7 @@ main(int argc, char** argv)
     fs_change_directory(main_access, "..");
 
     fs_remove_directory(main_access, "new_dir1");
-    */
+    
     fs_remove_directory(main_access, "new_dir");
 
     free(a);
