@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "filters/filters.h"
+#include <errno.h>
 
 char* DEFAULT_PATH = "/";
 
@@ -90,6 +91,14 @@ pth_print_path(struct current_path* path)
     printf("%s with length %d\n", path->current, path->length);
 }
 
+char*
+pth_get_path_string(struct current_path* path)
+{
+    char* path_string = malloc(sizeof(char) * 1000);
+    strcpy(path_string, path->current);
+    return path_string;
+}
+
 void
 pth_cascade_delete(struct current_path* path)
 {
@@ -153,11 +162,6 @@ pth_get_files_in_dir(
         filter,
         alphasort
     );
-
-    if(*number_of_entries == -1){
-        free(number_of_entries);
-        return NULL;
-    }
 
     return files_in_dir;
 }
@@ -243,35 +247,34 @@ pth_resolve_filter_type(enum filter_type filter_option)
 }
 
 
-int
+struct fs_error
 pth_mkdir_by_path(struct current_path* path, const char* dir_name)
 {
     pth_delete_end_slash(path);
     int dir_fd = open(path->current, O_RDONLY | O_DIRECTORY);
     pth_add_end_slash(path);
     if(dir_fd == -1){
-        return -1;
+        return pth_handle_errno_open(path, "");
     }
     int result = mkdirat(dir_fd, dir_name, 0755);
     if(result == -1){
-        printf("Failed to create dir\n");
         close(dir_fd);
-        return -1;
+        return pth_handle_errno_open(path, dir_name);
     }
     result = close(dir_fd);
     if(result == -1){
-        return -1;
+        return pth_handle_errno_close(path, "");
     }
-    return 1;
+    return create_no_error_fs_error();
 }
 
 
-enum cd_error
+struct fs_error
 pth_cd_dir(struct current_path** path, const char* dir_name)
 {
     struct dirent* is_exists = pth_get_file_in_dir(*path, FILTER_ALL, DT_DIR, dir_name);
     if(is_exists == NULL){
-        return CD_INVALID_DIRECTORY;
+        return create_fs_error(NO_ENTITY, pth_get_path_string(*path));
     }
     
     if(strcmp(is_exists->d_name, "..") == 0){
@@ -282,61 +285,62 @@ pth_cd_dir(struct current_path** path, const char* dir_name)
     
     free(is_exists);
 
-    return CD_NO_ERROR;
+    return create_no_error_fs_error();
 }
 
-enum creation_error 
+struct fs_error 
 pth_create_file(struct current_path* path, 
     const char* new_file)
 {
     int dir_d = open(path->current, O_DIRECTORY);
     if(dir_d == -1){
-        return CR_SOMETHING_WENT_WRONG;
+        
+        return pth_handle_errno_open(path, "");
     }
     int file_d = openat(dir_d, new_file, O_WRONLY | O_CREAT, 0744);
     if(file_d == -1){
-        return CR_SOMETHING_WENT_WRONG;
+        return pth_handle_errno_open(path, new_file);
     }
     int close_file_d = close(file_d);
     if(close_file_d == -1){
-        return CR_SOMETHING_WENT_WRONG;
+        return pth_handle_errno_close(path, new_file);
     }
     int close_dir_d = close(dir_d);
     if(close_dir_d == -1){
-        return CR_SOMETHING_WENT_WRONG;
+        return pth_handle_errno_close(path, "");
     }
-    return CR_NO_ERROR;
+    return create_no_error_fs_error();
 }
 
-enum remove_error
+struct fs_error
 pth_remove_file(struct current_path* path, 
     const char* remove_file)
 {   
     int dir_d = open(path->current, O_DIRECTORY);
 
     if(dir_d == -1){
-        return RM_SOMETHING_WENT_WRONG;
+        return pth_handle_errno_open(path, "");
     }
 
     int error = unlinkat(dir_d, remove_file, 0);
     if(error == -1){
-        return RM_SOMETHING_WENT_WRONG;
+        return pth_handle_errno_unlink(path, remove_file);
     }
     int close_dir_d = close(dir_d);
     if(close_dir_d == -1){
-        return RM_SOMETHING_WENT_WRONG;
+        return pth_handle_errno_close(path, "");
     }
-    return RM_NO_ERROR;
+    return create_no_error_fs_error();
 }
 
-enum remove_error
+struct fs_error
 pth_remove_directory(struct current_path* path, 
     const char* remove_dir)
 {   
     struct current_path* dir_path = pth_add_path(path, remove_dir);
-    enum remove_error remove_files_error = pth_remove_all_files_from_dir(dir_path);
+    struct fs_error remove_files_error = pth_remove_all_files_from_dir(dir_path);
 
-    if(remove_files_error != RM_NO_ERROR){
+    if(remove_files_error.error_code != NO_ERROR){
         pth_delete_path(dir_path);
         return remove_files_error;
     }
@@ -344,46 +348,155 @@ pth_remove_directory(struct current_path* path,
     int dir_d = open(path->current, O_DIRECTORY);
     if(dir_d == -1){
         pth_delete_path(dir_path);
-        return RM_NO_RIGHTS;
+        return pth_handle_errno_open(path, "");
     }
 
     int unlink_err = unlinkat(dir_d, remove_dir, AT_REMOVEDIR);
 
     if(unlink_err == -1){
         pth_delete_path(dir_path);
-        return RM_NOT_A_DIRECTORY;
+        return pth_handle_errno_unlink(path, "");
     }
 
     int close_dir_err = close(dir_d);
     if(close_dir_err == -1){
         pth_delete_path(dir_path);
-        return RM_NOT_A_FILE;
+        return pth_handle_errno_close(path, "");
     }
     pth_delete_path(dir_path);
-    return RM_NO_ERROR;
+    return create_no_error_fs_error();
 }
 
-enum remove_error
+struct fs_error
 pth_remove_all_files_from_dir(struct current_path* dir_path)
 {
-    //printf("Starting to remove files from dir: %s\n", dir_path->current);
     int length;
     struct dirent** all_files = pth_get_files_in_dir(dir_path, &length, pth_resolve_filter_type(FILTER_NON_UTILITY));
 
-    if(all_files == NULL){
-        pth_free_all_files(all_files, length);
-        return RM_NO_RIGHTS;
+    if(length == 0){
+        //pth_free_all_files(all_files, length);
+        return create_no_error_fs_error();
+    }else if(length == -1){
+        return pth_handle_errno_open(dir_path, "");
     }
 
 
     for(int i = 0; i < length; ++i){
-        //printf("Deleting file: %s with number %d\n", all_files[i]->d_name, i);
-        enum remove_error error = pth_remove_file(dir_path, all_files[i]->d_name);
-        if(error != RM_NO_ERROR){
+        struct fs_error error;
+        error.error_code = NO_ERROR;
+        if(all_files[i]->d_type == DT_DIR){
+            pth_remove_directory(dir_path, all_files[i]->d_name);
+        }else if(all_files[i]->d_type == DT_REG){
+            error = pth_remove_file(dir_path, all_files[i]->d_name);
+        }else{
+            error = create_fs_error(SOMETHING_WENT_WRONG, "Something went wrong");
+        }
+        if(error.error_code != NO_ERROR){
             pth_free_all_files(all_files, length);
+            
             return error;
         }
     }
     pth_free_all_files(all_files, length);
-    return RM_NO_ERROR;
+    return create_no_error_fs_error();
+}
+
+struct fs_error
+pth_handle_errno_open(struct current_path* needed_out, const char* file)
+{
+    printf("Error occured while opening\n");
+    struct current_path* error_in_path = pth_add_path(needed_out, file);
+
+    enum fs_error_code returning_code;
+
+
+    switch (errno)
+    {
+    case EACCES:
+        returning_code = PERMITION_DENIED;
+        break;
+    case EEXIST:
+        returning_code = ALREADY_EXISTS;
+        break;
+    case EISDIR:
+        returning_code = NOT_A_FILE;
+        break;
+    case ENOTDIR:
+        returning_code = NOT_A_DIRECTORY;
+        break;
+    case ENOENT:
+        returning_code = NO_ENTITY;
+        break;
+    default:
+        printf("Error code:%d\n", errno);
+        returning_code = SOMETHING_WENT_WRONG;
+        break;
+    }
+    char* error_in_path_string = pth_get_path_string(error_in_path);
+    pth_delete_path(error_in_path);
+
+    return create_fs_error(returning_code, error_in_path_string);
+}
+
+struct fs_error
+pth_handle_errno_close(struct current_path* needed_out, const char* file)
+{
+    struct current_path* error_in_path = pth_add_path(needed_out, file);
+    char* error_in_path_string = pth_get_path_string(error_in_path);
+    pth_delete_path(error_in_path);
+    return create_fs_error(SOMETHING_WENT_WRONG, error_in_path_string);
+}
+
+
+struct fs_error
+pth_handle_errno_unlink(struct current_path* needed_out, const char* file){
+    printf("Error occured while unlinkig\n");
+    struct current_path* error_in_path = pth_add_path(needed_out, file);
+    char* error_in_path_string = pth_get_path_string(error_in_path);
+    pth_delete_path(error_in_path); 
+
+    enum fs_error_code returning_code;
+
+    switch (errno)
+    {
+    case EPERM:
+    case EACCES:
+        returning_code = PERMITION_DENIED;
+        break;
+    case EBUSY:
+        returning_code = CURRENTLY_IN_USE;
+        break;
+    case ELOOP:
+        returning_code = CANT_RESOLVE_LINKS;
+        break;
+    case ENOTDIR:
+        returning_code = NOT_A_DIRECTORY;
+        break;
+    case EISDIR:
+        returning_code = NOT_A_FILE;
+        break;
+    case ENOENT:
+        returning_code = NO_ENTITY;
+        break;
+    default:
+        printf("Error code:%d\n", errno);
+        returning_code = SOMETHING_WENT_WRONG;
+        break;
+    }
+    return create_fs_error(returning_code, error_in_path_string);
+}
+
+struct fs_error
+create_fs_error(enum fs_error_code error_code, char* messg){
+    struct fs_error new_error;
+    new_error.error_code = error_code;
+    new_error.message = messg;
+    return new_error;
+}
+
+struct fs_error
+create_no_error_fs_error(){
+    struct fs_error new_error;
+    new_error.error_code = NO_ERROR;
+    return new_error;
 }

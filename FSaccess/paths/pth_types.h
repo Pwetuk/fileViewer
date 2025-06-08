@@ -7,23 +7,20 @@ enum filter_type{
     FILTER_NON_UTILITY  = 2
 };
 
-enum cd_error{
-    CD_INVALID_DIRECTORY, 
-    CD_NO_DIRECTORY, 
-    CD_NO_ERROR
+enum fs_error_code{
+    NO_ERROR,
+    PERMITION_DENIED,
+    NOT_A_DIRECTORY,
+    NOT_A_FILE,
+    SOMETHING_WENT_WRONG,
+    NO_ENTITY,
+    ALREADY_EXISTS,
+    CURRENTLY_IN_USE,
+    CANT_RESOLVE_LINKS,
 };
 
-enum creation_error {
-    CR_NO_ERROR, 
-    CR_NO_RIGHTS, 
-    CR_SOMETHING_WENT_WRONG
-};
-
-enum remove_error {
-    RM_NO_ERROR, 
-    RM_NO_RIGHTS, 
-    RM_NOT_A_DIRECTORY, 
-    RM_NOT_A_FILE, 
-    RM_SOMETHING_WENT_WRONG
+struct fs_error{
+    enum fs_error_code error_code;
+    char* message;
 };
 #endif

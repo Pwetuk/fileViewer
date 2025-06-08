@@ -65,29 +65,45 @@ typeof(int (const struct dirent *))*
 pth_resolve_filter_type(enum filter_type filter_option);
 
 
-int
+struct fs_error
 pth_mkdir_by_path(struct current_path* path, const char* dir_name);
 
 
 struct dirent*
 pth_find_file_in_dir(struct current_path* path, typeof(int (const struct dirent *)) *filter);
 
-enum cd_error
+struct fs_error
 pth_cd_dir(struct current_path** path, const char* dir_name);
 
 void
 pth_free_all_files_except(struct dirent** dir_entries, int length, int except_dirent);
 
-enum creation_error 
+struct fs_error 
 pth_create_file(struct current_path* path, const char* new_file);
 
-enum remove_error
+struct fs_error
 pth_remove_file(struct current_path* path, const char* remove_file);
 
-enum remove_error
+struct fs_error
 pth_remove_directory(struct current_path* path, const char* remove_dir);
 
-enum remove_error
+struct fs_error
 pth_remove_all_files_from_dir(struct current_path* dir_path);
+
+
+struct fs_error
+pth_handle_errno_open(struct current_path* needed_out, const char* file);
+
+struct fs_error
+pth_handle_errno_close(struct current_path* needed_out, const char* file);
+
+struct fs_error
+pth_handle_errno_unlink(struct current_path* needed_out, const char* file);
+
+struct fs_error
+create_fs_error(enum fs_error_code error_code, char* messg);
+
+struct fs_error
+create_no_error_fs_error();
 
 #endif

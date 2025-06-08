@@ -54,37 +54,79 @@ fs_change_filter_type(struct FSaccess* main_access,
     change_filter_mode(main_access->fs_settings, filter_mode);
 }
 
-enum cd_error
+void
 fs_change_directory(struct FSaccess* main_access,
     const char* cd_to_dir)
 {
-    return pth_cd_dir(&(main_access->access_path), cd_to_dir);
+    struct fs_error cd_err = pth_cd_dir(&(main_access->access_path), cd_to_dir);
+    fs_handle_error(cd_err, "fs_change_directory");
 }
 
-int
+void
 fs_make_directory(struct FSaccess* main_access,
     const char* new_dir_name)
 {
-    return pth_mkdir_by_path(main_access->access_path, new_dir_name);
+    struct fs_error mk_err = pth_mkdir_by_path(main_access->access_path, new_dir_name);
+    fs_handle_error(mk_err, "fs_make_directory");
 }
 
-enum creation_error
+void
 fs_create_file(struct FSaccess* main_access, 
     const char* new_file_name)
 {
-    return pth_create_file(main_access->access_path, new_file_name);
+    struct fs_error create_err = pth_create_file(main_access->access_path, new_file_name);
+    fs_handle_error(create_err, "fs_create_file");
 }
 
-enum remove_error
+void
 fs_remove_file(struct FSaccess* main_access, 
     const char* to_remove_file)
 {
-    return pth_remove_file(main_access->access_path, to_remove_file);
+    struct fs_error remove_err = pth_remove_file(main_access->access_path, to_remove_file);
+    fs_handle_error(remove_err, "fs_remove_file");
 }
 
-enum remove_error
+void
 fs_remove_directory(struct FSaccess* main_access, 
     const char* to_remove_dir)
 {
-    return pth_remove_directory(main_access->access_path, to_remove_dir);
+    struct fs_error remover_err = pth_remove_directory(main_access->access_path, to_remove_dir);
+    fs_handle_error(remover_err, "fs_remove_directory");
+}
+
+void
+fs_handle_error(struct fs_error handling_error, const char* original_function)
+{
+    enum fs_error_code handling_error_code = handling_error.error_code;
+    switch (handling_error_code)
+    {
+    case NO_ERROR:
+        return;
+    case PERMITION_DENIED:
+        printf("Permition denied in %s\n", original_function);
+        break;
+    case NOT_A_DIRECTORY:
+        printf("Not a directory in %s\n", original_function);
+        break;
+    case NOT_A_FILE:
+        printf("Not a file in %s\n", original_function);
+        break;
+    case NO_ENTITY:
+        printf("Unable to open directory in %s\n", original_function);
+        break;
+    case ALREADY_EXISTS:
+        printf("Cant create file/directory file already exists in %s\n", original_function);
+        break;
+    case CURRENTLY_IN_USE:
+        printf("Cant process file/dir. File is open in %s\n", original_function);
+        break;
+    case CANT_RESOLVE_LINKS:
+        printf("Problem with resolving links in %s", original_function);
+        break;
+    default:
+        printf("Cant resolve error in %s\n", original_function);
+        break;
+    }
+    printf("Additional message is: %s\n", handling_error.message);
+    free(handling_error.message);
 }
